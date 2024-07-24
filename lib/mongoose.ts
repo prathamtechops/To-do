@@ -3,8 +3,6 @@ import mongoose from "mongoose";
 let isConnected: boolean = false;
 
 export const connectToDatabase = async () => {
-  mongoose.set("strictQuery", true);
-
   if (!process.env.MONGODB_URI) {
     // throw new Error("MONGO_URI is not defined");
     return console.log("MONGO_URI is not defined");
@@ -14,9 +12,11 @@ export const connectToDatabase = async () => {
     return console.log("Using existing database connection");
   }
 
+  // Error connecting to database MongoAPIError: URI option "appName" cannot be specified with no value
+
   try {
     await mongoose.connect(process.env.MONGODB_URI, {
-      dbName: "To-Do",
+      dbName: "todo",
     });
 
     isConnected = true;

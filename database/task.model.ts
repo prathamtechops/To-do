@@ -4,7 +4,7 @@ export interface ITodo extends Document {
   _id: Schema.Types.ObjectId;
   title: string;
   description: string;
-  status: "To Do" | "In Progress" | "Done";
+  status: "toDo" | "inProgress" | "done";
   userId: Schema.Types.ObjectId;
 }
 

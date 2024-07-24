@@ -1,4 +1,6 @@
-import User from "@/database/user.model";
+"use server";
+
+import User, { IUser } from "@/database/user.model";
 import { CreateUserParams, GetUserByClerkId, UpdateUserParams } from "@/types";
 import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "../mongoose";
@@ -33,9 +35,23 @@ export async function deleteUser(params: GetUserByClerkId) {
   try {
     connectToDatabase();
     const { clerkId } = params;
-    const user = await User.findOneAndDelete({ clerkId });
+    const user: IUser | null = await User.findOneAndDelete({ clerkId });
+    if (!user) throw new Error("User not found");
     return user;
   } catch (error) {
     throw new Error(error instanceof Error ? error.message : "Unknown error");
+  }
+}
+
+export async function getUserByClerkId(params: GetUserByClerkId) {
+  try {
+    await connectToDatabase();
+    const { clerkId } = params;
+
+    const user = await User.findOne({ clerkId });
+    if (!user) throw new Error("User not found");
+    return user;
+  } catch (error) {
+    console.log(error);
   }
 }
