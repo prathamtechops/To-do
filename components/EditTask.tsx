@@ -21,12 +21,20 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { addTask } from "@/lib/actions/task.acion";
+import { ITodo } from "@/database/task.model";
+import { deleteTask, updateTask } from "@/lib/actions/task.acion";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Schema } from "mongoose";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { Textarea } from "./ui/textarea";
 
 const formSchema = z.object({
@@ -35,24 +43,50 @@ const formSchema = z.object({
     .string()
     .min(1, "Description is required")
     .max(100, "Description is too long"),
+  status: z.enum(["toDo", "inProgress", "done"]),
 });
 
-const AddTaskDialog = ({ userId }: { userId: Schema.Types.ObjectId }) => {
+const EditTaskDialog = ({
+  userId,
+  task,
+}: {
+  userId: Schema.Types.ObjectId;
+  task: ITodo;
+}) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
-      description: "",
+      title: task.title,
+      description: task.description,
+      status: task.status,
     },
   });
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const res = await addTask({
+      const res = await updateTask({
         title: values.title,
         description: values.description,
         userId,
+        path: "/",
+        taskId: task._id,
+        status: values.status,
+      });
+      if (res.success === 200) {
+        toast(res.message);
+      }
+    } catch (err) {
+      console.log(err);
+      toast("Something went wrong");
+    }
+  }
+
+  async function handleDelete() {
+    try {
+      const res = await deleteTask({
+        userId,
+        taskId: task._id,
         path: "/",
       });
       if (res.success === 200) {
@@ -63,10 +97,11 @@ const AddTaskDialog = ({ userId }: { userId: Schema.Types.ObjectId }) => {
       toast("Something went wrong");
     }
   }
+
   return (
     <Dialog>
       <DialogTrigger>
-        <Button>Add Task</Button>
+        <Button>Edit Task</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <Form {...form}>
@@ -106,16 +141,46 @@ const AddTaskDialog = ({ userId }: { userId: Schema.Types.ObjectId }) => {
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <FormControl>
+                    <Select onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="toDO">To Do</SelectItem>
+                        <SelectItem value="inProgress">In Progress</SelectItem>
+                        <SelectItem value="done">Done</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            ></FormField>
             <DialogFooter>
+              {
+                <DialogClose asChild>
+                  <Button variant="destructive" onClick={handleDelete}>
+                    Delete
+                  </Button>
+                </DialogClose>
+              }
+
               {form.formState.isValid && (
                 <DialogClose>
-                  <Button type="submit">
-                    {form.formState.isSubmitting ? "Adding..." : "Add Task"}
+                  <Button disabled={form.formState.isSubmitting} type="submit">
+                    {form.formState.isSubmitting ? "Editing..." : "Edit Task"}
                   </Button>
                 </DialogClose>
               )}
               {!form.formState.isValid && (
-                <Button type="submit">Add Task</Button>
+                <Button type="submit">Edit Task</Button>
               )}
             </DialogFooter>
           </form>
@@ -126,4 +191,4 @@ const AddTaskDialog = ({ userId }: { userId: Schema.Types.ObjectId }) => {
   );
 };
 
-export default AddTaskDialog;
+export default EditTaskDialog;

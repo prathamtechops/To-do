@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+"use client";
 import {
   Card,
   CardContent,
@@ -7,16 +7,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-const CardComponent = ({ task }: any) => {
+import { ITodo } from "@/database/task.model";
+import { Schema } from "mongoose";
+import EditTaskDialog from "./EditTask";
+import { Badge } from "./ui/badge";
+const CardComponent = ({
+  task,
+  userId,
+}: {
+  task: ITodo;
+  userId: Schema.Types.ObjectId;
+}) => {
   return (
-    <Card key={task.id}>
+    <Card>
       <CardHeader>
         <CardTitle>{task.title}</CardTitle>
       </CardHeader>
@@ -24,24 +27,12 @@ const CardComponent = ({ task }: any) => {
         <p>{task.description}</p>
       </CardContent>
       <CardFooter className="flex items-center justify-between">
-        <Select
-          value={task.status}
-          // onValueChange={(newStatus) => updateTaskStatus(task.id, newStatus)}
-        >
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="To Do">To Do</SelectItem>
-            <SelectItem value="In Progress">In Progress</SelectItem>
-            <SelectItem value="Done">Done</SelectItem>
-          </SelectContent>
-        </Select>
+        <EditTaskDialog userId={userId} task={task} />
         <Badge
           variant={
-            task.status === "To Do"
+            task.status === "toDo"
               ? "default"
-              : task.status === "In Progress"
+              : task.status === "inProgress"
               ? "secondary"
               : "outline"
           }

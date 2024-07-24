@@ -2,14 +2,13 @@
 
 import Todo, { ITodo } from "@/database/task.model";
 import User from "@/database/user.model";
-import { Schema } from "mongoose";
+import { FilterQuery, Schema } from "mongoose";
 import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "../mongoose";
 
 export interface AddTaskParams {
   title: string;
   description: string;
-  status: "To Do" | "In Progress" | "Done";
   userId: Schema.Types.ObjectId;
   path: string;
 }
@@ -18,11 +17,11 @@ export async function addTask(params: AddTaskParams) {
   try {
     connectToDatabase();
 
-    const { title, description, status, userId, path } = params;
+    const { title, description, userId, path } = params;
     const task: ITodo | null = await Todo.create({
       title,
       description,
-      status,
+      status: "toDo",
       userId,
     });
 
@@ -38,7 +37,10 @@ export async function addTask(params: AddTaskParams) {
     if (!user) throw new Error("User not found");
 
     revalidatePath(path);
-    return task;
+    return {
+      success: 200,
+      message: "Task added",
+    };
   } catch (error) {
     throw new Error(error instanceof Error ? error.message : "Unknown error");
   }
@@ -47,7 +49,7 @@ export async function addTask(params: AddTaskParams) {
 export interface UpdateTaskParams {
   title: string;
   description: string;
-  status: "To Do" | "In Progress" | "Done";
+  status: "toDo" | "inProgress" | "done";
   userId: Schema.Types.ObjectId;
   path: string;
   taskId: Schema.Types.ObjectId;
@@ -75,6 +77,11 @@ export async function updateTask(params: UpdateTaskParams) {
     if (!task) throw new Error("Task not found");
 
     revalidatePath(path);
+
+    return {
+      success: 200,
+      message: "Task updated",
+    };
   } catch (error) {
     throw new Error(error instanceof Error ? error.message : "Unknown error");
   }
@@ -100,14 +107,17 @@ export async function deleteTask(params: DeleteTaskParams) {
 
     revalidatePath(path);
 
-    return task;
+    return {
+      success: 200,
+      message: "Task deleted",
+    };
   } catch (error) {
     throw new Error(error instanceof Error ? error.message : "Unknown error");
   }
 }
 
 export interface FilterTaskParams {
-  status?: "To Do" | "In Progress" | "Done";
+  status: string;
   userId: Schema.Types.ObjectId;
   query?: string;
 }
@@ -118,7 +128,7 @@ export async function getAllTasks(params: FilterTaskParams) {
 
     const { status, userId, query } = params;
 
-    const filterQuery = query
+    const filter: FilterQuery<typeof Todo> = query
       ? {
           $or: [
             { title: { $regex: query, $options: "i" } },
@@ -126,13 +136,12 @@ export async function getAllTasks(params: FilterTaskParams) {
           ],
         }
       : {};
+    if (status !== "") filter.status = status;
+    const tasks = await Todo.find({ ...filter, userId }).sort({
+      createdAt: -1,
+    });
 
-    const tasks = await Todo.find({
-      userId,
-      status,
-      ...filterQuery,
-    }).sort({ createdAt: -1 });
-    return tasks;
+    return JSON.parse(JSON.stringify(tasks)) as ITodo[];
   } catch (error) {
     throw new Error(error instanceof Error ? error.message : "Unknown error");
   }

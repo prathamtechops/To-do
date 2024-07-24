@@ -20,7 +20,7 @@ const TodoSchema: Schema = new Schema(
     },
     status: {
       type: String,
-      enum: ["To Do", "In Progress", "Done"],
+      enum: ["toDo", "inProgress", "done"],
       required: true,
     },
     userId: {
