@@ -26,7 +26,7 @@ const CardComponent = ({ task }) => {
       <CardFooter className="flex items-center justify-between">
         <Select
           value={task.status}
-          onValueChange={(newStatus) => updateTaskStatus(task.id, newStatus)}
+          // onValueChange={(newStatus) => updateTaskStatus(task.id, newStatus)}
         >
           <SelectTrigger className="w-32">
             <SelectValue />
