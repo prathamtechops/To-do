@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-const CardComponent = ({ task }) => {
+const CardComponent = ({ task }: any) => {
   return (
     <Card key={task.id}>
       <CardHeader>
